@@ -3,8 +3,8 @@ package session
 import (
 	context2 "context"
 	"encoding/json"
-	"myGin/context"
-	"myGin/redis"
+	"my_item_cf_go/context"
+	"my_item_cf_go/redis"
 	"time"
 
 	uuid "github.com/satori/go.uuid"

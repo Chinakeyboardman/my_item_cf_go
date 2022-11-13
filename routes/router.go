@@ -3,9 +3,10 @@ package routes
 ////routes/router.go
 
 import (
+	"my_item_cf_go/context"
+	"my_item_cf_go/response"
+
 	"github.com/gin-gonic/gin"
-	"myGin/context"
-	"myGin/response"
 )
 
 type router struct {

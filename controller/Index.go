@@ -3,9 +3,9 @@ package controller
 //controller/Index.go
 
 import (
-	"myGin/component/lock"
-	"myGin/context"
-	"myGin/response"
+	"my_item_cf_go/component/lock"
+	"my_item_cf_go/context"
+	"my_item_cf_go/response"
 	"strconv"
 	"time"
 )

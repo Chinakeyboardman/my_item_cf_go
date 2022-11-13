@@ -2,7 +2,7 @@ package redisCache
 
 import (
 	"context"
-	"myGin/redis"
+	"my_item_cf_go/redis"
 	"time"
 )
 

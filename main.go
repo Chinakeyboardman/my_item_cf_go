@@ -1,8 +1,8 @@
 package main
 
 import (
-	"myGin/kernel"
-	"myGin/routes"
+	"my_item_cf_go/kernel"
+	"my_item_cf_go/routes"
 
 	"github.com/gin-gonic/gin"
 )

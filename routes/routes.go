@@ -3,8 +3,8 @@ package routes
 //routes/routes.go
 
 import (
-	"myGin/controller"
-	"myGin/kernel"
+	"my_item_cf_go/controller"
+	"my_item_cf_go/kernel"
 
 	"github.com/gin-gonic/gin"
 )

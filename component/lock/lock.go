@@ -3,7 +3,7 @@ package lock
 import (
 	"context"
 	"fmt"
-	"myGin/redis"
+	"my_item_cf_go/redis"
 	"sync"
 	"time"
 

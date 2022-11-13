@@ -3,9 +3,9 @@ package kernel
 //middleware/session/session.go
 
 import (
-	"myGin/context"
-	"myGin/middleware/exception"
-	"myGin/middleware/session"
+	"my_item_cf_go/context"
+	"my_item_cf_go/middleware/exception"
+	"my_item_cf_go/middleware/session"
 )
 
 // Middleware 全局中间件

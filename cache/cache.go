@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"myGin/cache/fileCache"
-	"myGin/cache/redisCache"
+	"my_item_cf_go/cache/fileCache"
+	"my_item_cf_go/cache/redisCache"
 	"time"
 )
 
