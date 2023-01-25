@@ -18,6 +18,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 // 基于项目的余弦相似度计算类
@@ -40,13 +43,21 @@ type ItemCf struct {
 	RecMovieNum    int     //产生推荐电影数
 }
 
+type Rating struct {
+	gorm.Model
+	UserId    int
+	MovieId   int
+	Rating    float64
+	Timestamp int
+}
+
 // 获取计算对象，初始化配置
 func GetItemCF() *ItemCf {
 	cf := ItemCf{
 		DataPath:       "../ml-1m/ratings.csv",
-		SaveTestPath:   "../../../runtime/testset.data",
-		SaveTrainPath:  "../../../runtime/trainset.data",
-		SaveSMXPath:    "../../../runtime/itemSimliarMatrix.data",
+		SaveTestPath:   "/runtime/item_cf_big_data/testset.data",
+		SaveTrainPath:  "/runtime/item_cf_big_data/trainset.data",
+		SaveSMXPath:    "/runtime/item_cf_big_data/itemSimliarMatrix.data",
 		TrainSetPecent: 0.75,
 		TrainSet:       make(map[string][]float64),
 		TrainSetRec:    make(map[string]map[string]float64),
@@ -87,27 +98,81 @@ func (cf *ItemCf) LoadData() {
 
 // 取得最大用户id
 func (cf *ItemCf) InitMaxUid() {
-	fs, err := os.Open(cf.DataPath)
-	if err != nil {
-		log.Fatalf("无法打开数据文件: %+v", err)
-	}
-	defer fs.Close()
-	r := csv.NewReader(fs)
-	//取得最大用户数，作为向量维度
+	var count int64
 	cf.MaxUserId = 0
-	for {
-		row, err := r.Read()
-		if err != nil && err != io.EOF {
-			log.Fatalf("文件读取错误 ： %+v", err)
-		}
-		if err == io.EOF {
-			break
-		}
-		uid, _ := strconv.Atoi(row[0])
-		if cf.MaxUserId < uid {
-			cf.MaxUserId = uid
+
+	db, err := gorm.Open(mysql.New(mysql.Config{
+		DSN:                       "root:123456@tcp(127.0.0.1:3304)/item_cf?charset=utf8&parseTime=True&loc=Local", // DSN data source name
+		DefaultStringSize:         256,                                                                             // string 类型字段的默认长度
+		DisableDatetimePrecision:  true,                                                                            // 禁用 datetime 精度，MySQL 5.6 之前的数据库不支持
+		DontSupportRenameIndex:    true,                                                                            // 重命名索引时采用删除并新建的方式，MySQL 5.7 之前的数据库和 MariaDB 不支持重命名索引
+		DontSupportRenameColumn:   true,                                                                            // 用 `change` 重命名列，MySQL 8 之前的数据库和 MariaDB 不支持重命名列
+		SkipInitializeWithVersion: false,                                                                           // 根据当前 MySQL 版本自动配置
+	}), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+
+	db.Table("rating").Distinct("user_id").Count(&count)
+	cf.MaxUserId = int(count)
+}
+
+// func (cf *ItemCf) InitMaxUid() {
+// 	fs, err := os.Open(cf.DataPath)
+// 	if err != nil {
+// 		log.Fatalf("无法打开数据文件: %+v", err)
+// 	}
+// 	defer fs.Close()
+// 	r := csv.NewReader(fs)
+// 	//取得最大用户数，作为向量维度
+// 	cf.MaxUserId = 0
+// 	for {
+// 		row, err := r.Read()
+// 		if err != nil && err != io.EOF {
+// 			log.Fatalf("文件读取错误 ： %+v", err)
+// 		}
+// 		if err == io.EOF {
+// 			break
+// 		}
+// 		uid, _ := strconv.Atoi(row[0])
+// 		if cf.MaxUserId < uid {
+// 			cf.MaxUserId = uid
+// 		}
+// 	}
+// }
+
+// 生成测试数据集和训练数据集
+func (cf *ItemCf) InitDivedSetNew() {
+	db, err := gorm.Open(mysql.New(mysql.Config{
+		DSN:                       "root:123456@tcp(127.0.0.1:3304)/item_cf?charset=utf8&parseTime=True&loc=Local", // DSN data source name
+		DefaultStringSize:         256,                                                                             // string 类型字段的默认长度
+		DisableDatetimePrecision:  true,                                                                            // 禁用 datetime 精度，MySQL 5.6 之前的数据库不支持
+		DontSupportRenameIndex:    true,                                                                            // 重命名索引时采用删除并新建的方式，MySQL 5.7 之前的数据库和 MariaDB 不支持重命名索引
+		DontSupportRenameColumn:   true,                                                                            // 用 `change` 重命名列，MySQL 8 之前的数据库和 MariaDB 不支持重命名列
+		SkipInitializeWithVersion: false,                                                                           // 根据当前 MySQL 版本自动配置
+	}), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+	// 查询评分表总数
+	var total int64
+	db.Table("rating").Count(&total)
+	pageSize := 1000
+	// offset := (page - 1) * pageSize
+	var rating []Rating
+	for page := 1; page*pageSize < int(total); page++ {
+		db.Table("rating").Unscoped().Scopes(Paginate(page, pageSize)).Find(&rating)
+		fmt.Println(page)
+		// for i := 0; i < len(rating); i++ {
+		// 	fmt.Println(rating[i])
+		// }
+		for _, value := range rating {
+			fmt.Println(value)
 		}
 	}
+
+	os.Exit(1)
+
 }
 
 // 生成测试数据集和训练数据集
@@ -144,6 +209,23 @@ func (cf *ItemCf) InitDivedSet() {
 		}
 	}
 	fmt.Printf("数据分组完成，训练集包含数据%d条,测试集包含数据%d条 \n", cf.TrainNum, cf.TestNum)
+}
+
+// 分页封装
+func Paginate(page int, pageSize int) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if page == 0 {
+			page = 1
+		}
+		switch {
+		case pageSize > 100:
+			pageSize = 100
+		case pageSize <= 0:
+			pageSize = 10
+		}
+		offset := (page - 1) * pageSize
+		return db.Offset(offset).Limit(pageSize)
+	}
 }
 
 // 初始化计算用，向量列表

@@ -3,6 +3,8 @@ module my_item_cf_go
 go 1.18
 require github.com/PeterYangs/tools v0.2.46
 
+require github.com/go-sql-driver/mysql v1.6.0 // indirect
+
 require (
 	github.com/axgle/mahonia v0.0.0-20180208002826-3358181d7394 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -34,6 +36,7 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gorm.io/driver/mysql v1.4.4
 	gorm.io/driver/sqlite v1.4.3 // indirect
-	gorm.io/gorm v1.24.1 // indirect
+	gorm.io/gorm v1.24.2 // indirect
 )
