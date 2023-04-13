@@ -98,6 +98,11 @@ func Login(context *context.Context) *response.Response {
 		}
 		return response.Resp().Json(data)
 	}
+	data := map[string]interface{}{
+		"status": 200,
+		"msg":    "success",
+	}
+	return response.Resp().Json(data)
 }
 
 /*
