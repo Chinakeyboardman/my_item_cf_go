@@ -7,6 +7,7 @@ import (
 	"my_item_cf_go/kernel"
 
 	"github.com/gin-gonic/gin"
+	"my_item_cf_go/middleware"
 )
 
 func config(router group) {
@@ -27,6 +28,17 @@ func config(router group) {
 	router.Registered(GET, "/index2", controller.Index2)
 	router.Registered(GET, "/index3", controller.Index3)
 	router.Registered(GET, "/index4", controller.Index4)
+
+	// 控制器
+	router.Group("/api", func(api group) {
+
+		api.Group("/item_cf", func(item_cf group) {
+
+			item_cf.Registered(GET, "/testItemCf", controller.TestItemCf, middleware.JWTAuth)
+
+		}, middleware.M2)
+
+	}, middleware.M1)
 
 }
 

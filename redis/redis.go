@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/viper"
+
 	"github.com/go-redis/redis/v8"
 )
 
@@ -22,9 +24,14 @@ func connectRedis() {
 
 	defer cancel()
 
+	// conf := &redis.Options{
+	// 	Addr: "127.0.0.1:6379",
+	// 	DB:   0,
+	// }
+
 	conf := &redis.Options{
-		Addr: "127.0.0.1:6379",
-		DB:   0,
+		Addr: viper.GetString("redis.addr"),
+		DB:   viper.GetInt("redis.db"),
 	}
 
 	c := redis.NewClient(conf)
