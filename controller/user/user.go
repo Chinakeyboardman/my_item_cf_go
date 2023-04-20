@@ -1,19 +1,18 @@
-package user
+package userController
 
 //controller/user/user.go
 
 import (
 	"fmt"
-	"my_item_cf_go/component/lock"
 	"my_item_cf_go/context"
 	myjwt "my_item_cf_go/middleware"
 	"my_item_cf_go/response"
 	"net/http"
 	"time"
 
-	jwtgo "github.com/dgrijalva/jwt-go"
-
 	"github.com/gin-gonic/gin"
+
+	jwtgo "github.com/dgrijalva/jwt-go"
 )
 
 /*
@@ -47,30 +46,12 @@ type User struct {
 	//etc ..
 }
 
+// 初始化
 func init() {
 	user := &User{UserId: 0,
 		UserCreateReq: UserCreateReq{
 			UserName: "tom"}}
 	fmt.Printf("user:%+v\n", user)
-}
-
-func TestItemCf(context *context.Context) *response.Response {
-
-	l := lock.NewLock("test", 1*time.Second)
-
-	defer l.Release()
-
-	if l.Block(4 * time.Second) {
-
-		data := map[string]interface{}{
-			"msg":    "拿锁成功",
-			"status": 200,
-		}
-
-		return response.Resp().Json(data)
-	}
-
-	return response.Resp().String("拿锁失败")
 }
 
 func Login(context *context.Context) *response.Response {
@@ -83,7 +64,11 @@ func Login(context *context.Context) *response.Response {
 			user := User{}
 			user.UserName = loginReq.UserName
 			user.UserId = 0
-			generateToken(context, user, "admin", 30)
+			// generateToken(context, user, "admin", 30)
+
+			res := generateToken(context, user, "admin", 30)
+			fmt.Print(res)
+			return res
 		} else {
 			data := map[string]interface{}{
 				"status": -1,
@@ -92,15 +77,21 @@ func Login(context *context.Context) *response.Response {
 			return response.Resp().Json(data)
 		}
 	} else {
+		// context.JSON(http.StatusOK, gin.H{
+		// 	"status": -1,
+		// 	"msg":    "json 解析失败." + err.Error(),
+		// })
+
 		data := map[string]interface{}{
 			"status": -1,
 			"msg":    "json 解析失败." + err.Error(),
 		}
 		return response.Resp().Json(data)
 	}
+
 	data := map[string]interface{}{
 		"status": 200,
-		"msg":    "success",
+		"msg":    "",
 	}
 	return response.Resp().Json(data)
 }
@@ -109,15 +100,15 @@ func Login(context *context.Context) *response.Response {
   此工程为了简单，直接将生成token放在controller中
   有效时间长度，单位是分钟
 */
-func generateToken(c *context.Context, user User, roleId string, expiredTimeByMinute int64) {
+func generateToken(c *context.Context, user User, roleId string, expiredTimeByMinute int64) *response.Response {
 	j := &myjwt.JWT{
-		[]byte(myjwt.SignKey),
+		SigningKey: []byte(myjwt.SignKey),
 	}
 	claims := myjwt.CustomClaims{
-		user.UserId,
-		user.UserName,
-		roleId,
-		jwtgo.StandardClaims{
+		UserId:   user.UserId,
+		UserName: user.UserName,
+		RoleId:   roleId,
+		StandardClaims: jwtgo.StandardClaims{
 			NotBefore: int64(time.Now().Unix() - 1000),                   // 签名生效时间
 			ExpiresAt: int64(time.Now().Unix() + expiredTimeByMinute*60), // 过期时间 一小时
 			Issuer:    "ginjwtdemo",                                      //签名的发行者
@@ -127,20 +118,73 @@ func generateToken(c *context.Context, user User, roleId string, expiredTimeByMi
 	token, err := j.CreateToken(claims)
 
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
+		// c.JSON(http.StatusOK, gin.H{
+		// 	"status": -1,
+		// 	"msg":    err.Error(),
+		// 	"data":   "{}",
+		// })
+		// return
+
+		res := map[string]interface{}{
 			"status": -1,
 			"msg":    err.Error(),
-		})
-		return
+			"data":   "",
+		}
+		return response.Resp().Json(res)
 	}
 
 	data := LoginResp{
 		Token: token,
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status": 0,
+
+	// c.JSON(http.StatusOK, gin.H{
+	// 	"status": 0,
+	// 	"msg":    "登录成功！",
+	// 	"data":   data,
+	// })
+	// return
+
+	res := map[string]interface{}{
+		"status": 200,
 		"msg":    "登录成功！",
 		"data":   data,
-	})
-	return
+	}
+	return response.Resp().Json(res)
+}
+
+func GetAllUsers(c *context.Context) *response.Response {
+	// func (ctl *UserController) GetAllUsers(c *gin.Context) {
+	claimsFromContext, err := c.Get(myjwt.Gin_Context_Key)
+	if err != false {
+		panic("Failed to get all users")
+	}
+
+	fmt.Print(claimsFromContext)
+	fmt.Print(claimsFromContext.(*myjwt.CustomClaims))
+
+	claims := claimsFromContext.(*myjwt.CustomClaims)
+	currentUser := claims.UserName
+	// klog.Infof("get all users, loginUser:%q", currentUser)
+	fmt.Print("get all users, loginUser:%q", currentUser)
+	var users []User
+	for i := 0; i < 3; i++ {
+		userName := fmt.Sprintf("tom%d", i)
+		user := User{UserId: 1}
+		user.UserName = userName
+		users = append(users, user)
+	}
+
+	fmt.Print("users")
+	fmt.Print(users)
+
+	res := map[string]interface{}{
+		"status": http.StatusOK,
+		"msg":    "登录成功！",
+		"data": gin.H{
+			"result": users,
+			"count":  len(users),
+		},
+	}
+	return response.Resp().Json(res)
+
 }

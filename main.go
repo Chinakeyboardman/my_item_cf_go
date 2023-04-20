@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"my_item_cf_go/kernel"
 	"my_item_cf_go/plugin/myorm"
 	"my_item_cf_go/routes"
@@ -17,7 +18,8 @@ func main() {
 	// 加载gorm
 	_, err := myorm.Connect()
 	if err != nil {
-		panic("Failed to connect to the database: " + err.Error())
+		fmt.Print("Failed to connect to the database: " + err.Error())
+		// panic("Failed to connect to the database: " + err.Error())
 	}
 
 	r := gin.Default()

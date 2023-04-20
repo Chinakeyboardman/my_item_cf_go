@@ -88,7 +88,7 @@ func (g group) Registered(method method, url string, action func(*context.Contex
 
 	case POST:
 
-		g.engine.GET(finalUrl, handlers...)
+		g.engine.POST(finalUrl, handlers...)
 
 	case PUT:
 

@@ -4,10 +4,12 @@ package routes
 
 import (
 	"my_item_cf_go/controller"
+	userController "my_item_cf_go/controller/user"
 	"my_item_cf_go/kernel"
 
-	"github.com/gin-gonic/gin"
 	"my_item_cf_go/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 func config(router group) {
@@ -29,13 +31,21 @@ func config(router group) {
 	router.Registered(GET, "/index3", controller.Index3)
 	router.Registered(GET, "/index4", controller.Index4)
 
+	// newUserController := userController.NewUserController()
+
 	// 控制器
 	router.Group("/api", func(api group) {
 
 		api.Group("/item_cf", func(item_cf group) {
 
-			item_cf.Registered(GET, "/testItemCf", controller.TestItemCf, middleware.JWTAuth)
+			item_cf.Registered(GET, "/testItemCf", controller.TestItemCf, middleware.M3)
 
+		}, middleware.M2)
+
+		api.Group("/user", func(user group) {
+			// user.Registered(POST, "/login", newUserController.Login)
+			user.Registered(POST, "/login", userController.Login)
+			user.Registered(POST, "/users", userController.GetAllUsers, middleware.JWTAuth)
 		}, middleware.M2)
 
 	}, middleware.M1)
